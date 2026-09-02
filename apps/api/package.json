@@ -3,32 +3,35 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js",
-    "lint": "eslint src --ext .ts",
+    "dev": "nest start --watch",
+    "build": "nest build",
+    "start": "node dist/main.js",
+    "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "db:generate": "prisma generate --schema=../../prisma/schema.prisma",
     "db:migrate": "prisma migrate dev --schema=../../prisma/schema.prisma"
   },
   "dependencies": {
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/core": "^11.0.1",
+    "@nestjs/platform-express": "^11.0.1",
     "@prisma/client": "^6.4.1",
     "@voiceflow/shared": "workspace:*",
-    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "ioredis": "^5.5.0"
+    "ioredis": "^5.5.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/cors": "^2.8.17",
-    "@types/express": "^5.0.0",
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/schematics": "^11.0.0",
+    "@types/express": "^5.0.6",
     "@types/node": "^22.13.5",
     "@typescript-eslint/eslint-plugin": "^8.24.1",
     "@typescript-eslint/parser": "^8.24.1",
     "eslint": "^9.21.0",
     "prisma": "^6.4.1",
-    "tsx": "^4.19.3",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.69.0"
   }

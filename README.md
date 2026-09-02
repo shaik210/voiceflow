@@ -14,7 +14,7 @@ VoiceFlow provides an intuitive interface for speech-to-text transcription. The 
 ## 2. Tech Stack
 
 - **Frontend:** Next.js (App Router), React, TypeScript, Tailwind CSS
-- **Backend:** Node.js, Express.js, TypeScript, REST API
+- **Backend:** Node.js, NestJS, TypeScript, REST API
 - **Database:** PostgreSQL, Prisma ORM
 - **Infrastructure:** Redis, Docker Compose
 - **Package Manager:** pnpm (Monorepo Workspaces)
@@ -31,16 +31,14 @@ voiceflow/
 │   │       ├── app/       # Pages and Layouts
 │   │       └── components/# Header, Record Button, Transcription Box
 │   │
-│   └── api/               # Express backend API
+│   └── api/               # NestJS backend API
 │       └── src/
-│           ├── controllers/
-│           ├── routes/
-│           ├── services/
-│           ├── middleware/
-│           ├── config/
-│           ├── types/
-│           ├── app.ts
-│           └── server.ts
+│           ├── main.ts    # Application entrypoint & global prefix
+│           ├── app.module.ts
+│           ├── health/    # HealthModule, HealthController, HealthService
+│           ├── prisma/    # PrismaModule, PrismaService
+│           ├── redis/     # RedisModule, RedisService
+│           └── common/    # Exception filters & interceptors
 │
 ├── packages/
 │   ├── shared/            # Shared TypeScript interfaces & DTOs
