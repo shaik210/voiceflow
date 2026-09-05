@@ -24,6 +24,12 @@ pnpm-debug.log*
 # docker / temp
 *.log
 
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
 # OS
 .DS_Store
 Thumbs.db

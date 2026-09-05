@@ -40,7 +40,7 @@ export class RedisService implements OnModuleDestroy {
       }
       const pong = await client.ping();
       return pong === 'PONG';
-    } catch (_error) {
+    } catch {
       return false;
     }
   }

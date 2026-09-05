@@ -16,3 +16,37 @@ model User {
 
   @@map("users")
 }
+
+enum RecordingStatus {
+  READY
+  FAILED
+}
+
+model Recording {
+  id           String          @id @default(uuid())
+  userId       String?
+  objectKey    String
+  mimeType     String
+  size         Int
+  originalName String?
+  duration     Int?
+  status       RecordingStatus
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  transcription Transcription?
+
+  @@map("recordings")
+}
+
+model Transcription {
+  id          String   @id @default(uuid())
+  recordingId String   @unique
+  text        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  recording Recording @relation(fields: [recordingId], references: [id], onDelete: Cascade)
+
+  @@map("transcriptions")
+}

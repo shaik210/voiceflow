@@ -157,4 +157,36 @@ Expected response:
 3. **Step 3:** Multipart audio upload endpoint (`POST /api/transcribe`) in Express backend.
 4. **Step 4:** Speech-to-Text service integration (e.g. OpenAI Whisper / Deepgram) and background processing via Redis queue.
 5. **Step 5:** Real-time state updates & transcription rendering in the frontend dashboard.
-# voiceflow
+
+---
+
+## 11. Local Transcription
+
+Explain:
+
+1. Install Python 3.9+.
+2. Create the virtual environment in `apps/transcription-worker/`:
+   ```bash
+   cd apps/transcription-worker
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
+3. Install requirements:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Install `ffmpeg` if required (e.g. `sudo apt install ffmpeg` on Linux, `brew install ffmpeg` on macOS).
+5. Start the transcription worker:
+   ```bash
+   python server.py
+   ```
+6. Set the provider in your root `.env`:
+   ```env
+   TRANSCRIPTION_PROVIDER=local
+   ```
+7. Start VoiceFlow (`pnpm dev`).
+8. Record audio in the browser.
+9. Upload it.
+10. Click Transcribe.
+
+*Note:* The first transcription may be slower because the Whisper model (`LOCAL_WHISPER_MODEL=base`) needs to download.

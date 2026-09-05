@@ -7,20 +7,7 @@ import { TranscriptionBox } from '@/components/transcription-box';
 import { Layers, Database, Cpu, ArrowRight } from 'lucide-react';
 
 export default function HomePage() {
-  const [simulatedText, setSimulatedText] = useState<string | undefined>(undefined);
-  const [isSimulated, setIsSimulated] = useState(false);
-
-  const handleSimulateRecord = () => {
-    if (simulatedText) {
-      setSimulatedText(undefined);
-      setIsSimulated(false);
-    } else {
-      setSimulatedText(
-        'Welcome to VoiceFlow! This is a placeholder transcription demonstrating the UI foundation.'
-      );
-      setIsSimulated(true);
-    }
-  };
+  const [transcriptionText, setTranscriptionText] = useState<string | undefined>();
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
@@ -43,8 +30,8 @@ export default function HomePage() {
 
         {/* Interactive Placeholder Section */}
         <div className="w-full max-w-3xl space-y-6">
-          <RecordButton onSimulateRecord={handleSimulateRecord} />
-          <TranscriptionBox transcription={simulatedText} isSimulated={isSimulated} />
+          <RecordButton onTranscriptionComplete={setTranscriptionText} />
+          <TranscriptionBox transcription={transcriptionText} isSimulated={false} />
         </div>
 
         {/* System Architecture Overview Grid */}
