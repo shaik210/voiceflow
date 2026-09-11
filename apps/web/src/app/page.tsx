@@ -4,10 +4,30 @@ import React, { useState } from 'react';
 import { AppHeader } from '@/components/app-header';
 import { RecordButton } from '@/components/record-button';
 import { TranscriptionBox } from '@/components/transcription-box';
+import { AIResponseBox } from '@/components/ai-response-box';
+import { RecordingHistory } from '@/components/recording-history';
+import { PipelineStatus } from '@/hooks/use-voice-pipeline';
+import { AIResponse } from '@/lib/api/recordings';
 import { Layers, Database, Cpu, ArrowRight } from 'lucide-react';
 
 export default function HomePage() {
   const [transcriptionText, setTranscriptionText] = useState<string | undefined>();
+  const [aiResponse, setAiResponse] = useState<AIResponse | undefined>();
+  const [pipelineStatus, setPipelineStatus] = useState<PipelineStatus>('idle');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handleTranscriptionComplete = (text: string | undefined) => {
+    setTranscriptionText(text);
+  };
+
+  const handleAIResponseComplete = (response: AIResponse | undefined) => {
+    setAiResponse(response);
+  };
+
+  const handlePipelineComplete = () => {
+    // Refresh history after entire pipeline completes
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
@@ -28,10 +48,25 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* Interactive Placeholder Section */}
+        {/* Interactive Voice Pipeline Section */}
         <div className="w-full max-w-3xl space-y-6">
-          <RecordButton onTranscriptionComplete={setTranscriptionText} />
+          <RecordButton 
+            onTranscriptionComplete={handleTranscriptionComplete} 
+            onAIResponseComplete={handleAIResponseComplete}
+            onPipelineComplete={handlePipelineComplete}
+            onStatusChange={setPipelineStatus}
+          />
           <TranscriptionBox transcription={transcriptionText} isSimulated={false} />
+          <AIResponseBox
+            response={aiResponse?.text}
+            model={aiResponse?.model}
+            isLoading={pipelineStatus === 'generating'}
+          />
+        </div>
+
+        {/* History Section */}
+        <div className="w-full max-w-3xl">
+          <RecordingHistory refreshTrigger={refreshTrigger} />
         </div>
 
         {/* System Architecture Overview Grid */}

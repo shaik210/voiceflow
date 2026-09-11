@@ -16,7 +16,7 @@ export function useTranscription(recordingId: string | undefined) {
 
     try {
       const result = await transcribeRecording(recordingId);
-      setTranscriptionResult(result.transcription);
+      setTranscriptionResult((result as any)?.transcription || result);
       setState('completed');
     } catch (err: any) {
       setError(err.message || 'Failed to transcribe recording');

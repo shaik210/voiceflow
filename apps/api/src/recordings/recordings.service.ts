@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, PayloadTooLargeException, UnsupportedMediaTypeException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, BadRequestException, PayloadTooLargeException, UnsupportedMediaTypeException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { StorageService } from '../storage/storage.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RecordingStatus } from '@prisma/client';
@@ -71,5 +71,54 @@ export class RecordingsService {
       await this.storageService.delete(objectKey);
       throw new InternalServerErrorException('Failed to save recording metadata');
     }
+  }
+
+  async listRecordings(limit: number) {
+    const recordings = await this.prisma.recording.findMany({
+      take: limit,
+      orderBy: [
+        { createdAt: 'desc' },
+        { id: 'desc' },
+      ],
+      include: {
+        transcription: {
+          select: {
+            id: true,
+            text: true,
+            createdAt: true,
+            updatedAt: true,
+          }
+        },
+      },
+    });
+
+    return recordings.map((r) => {
+      // Exclude objectKey to avoid leaking storage details
+      const { objectKey, userId, ...safeRecording } = r;
+      return safeRecording;
+    });
+  }
+
+  async getRecording(id: string) {
+    const recording = await this.prisma.recording.findUnique({
+      where: { id },
+      include: {
+        transcription: {
+          select: {
+            id: true,
+            text: true,
+            createdAt: true,
+            updatedAt: true,
+          }
+        },
+      },
+    });
+
+    if (!recording) {
+      throw new NotFoundException('Recording not found');
+    }
+
+    const { objectKey, userId, ...safeRecording } = recording;
+    return safeRecording;
   }
 }

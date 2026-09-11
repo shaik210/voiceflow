@@ -46,7 +46,19 @@ model Transcription {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  recording Recording @relation(fields: [recordingId], references: [id], onDelete: Cascade)
+  recording  Recording   @relation(fields: [recordingId], references: [id], onDelete: Cascade)
+  aiResponse AIResponse?
 
   @@map("transcriptions")
+}
+
+model AIResponse {
+  id              String   @id @default(uuid())
+  transcriptionId String   @unique
+  text            String
+  model           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  transcription Transcription @relation(fields: [transcriptionId], references: [id], onDelete: Cascade)
 }

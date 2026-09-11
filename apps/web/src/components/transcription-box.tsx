@@ -28,7 +28,7 @@ export function TranscriptionBox({ transcription, isSimulated }: TranscriptionBo
       <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
         <div className="flex items-center space-x-2">
           <FileText className="w-4 h-4 text-indigo-400" />
-          <h3 className="text-sm font-semibold text-slate-200">Transcription Result</h3>
+          <h3 className="text-sm font-semibold text-slate-200">Transcript</h3>
           {isSimulated && (
             <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-500/30">
               Demo Output
@@ -58,7 +58,7 @@ export function TranscriptionBox({ transcription, isSimulated }: TranscriptionBo
       </div>
 
       <div className="min-h-[140px] flex items-center justify-center p-4 rounded-xl bg-slate-950/40 border border-slate-800/40">
-        <p className={`text-center text-base leading-relaxed ${transcription ? 'text-slate-100 font-medium' : 'text-slate-500 italic'}`}>
+        <p className={`text-center text-base leading-relaxed ${transcription ? 'text-slate-100 font-medium whitespace-pre-wrap' : 'text-slate-500 italic'}`}>
           {displayText}
         </p>
       </div>

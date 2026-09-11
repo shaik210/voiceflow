@@ -1,49 +1,46 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { Mic, Square, AlertCircle, RefreshCw, UploadCloud, CheckCircle2, FileText, Loader2 } from 'lucide-react';
-import { useAudioRecorder } from '@/hooks/use-audio-recorder';
-import { useRecordingUpload } from '@/hooks/use-recording-upload';
-import { useTranscription } from '@/hooks/use-transcription';
+import React from 'react';
+import { Mic, Square, AlertCircle, RefreshCw, UploadCloud, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
+import { useVoicePipeline, PipelineStatus } from '@/hooks/use-voice-pipeline';
+import { AIResponse } from '@/lib/api/recordings';
 
 interface RecordButtonProps {
   onTranscriptionComplete?: (text: string | undefined) => void;
+  onUploadComplete?: () => void;
+  onAIResponseComplete?: (aiResponse: AIResponse | undefined) => void;
+  onPipelineComplete?: () => void;
+  onStatusChange?: (status: PipelineStatus) => void;
 }
 
-export function RecordButton({ onTranscriptionComplete }: RecordButtonProps = {}) {
+export function RecordButton({
+  onTranscriptionComplete,
+  onUploadComplete,
+  onAIResponseComplete,
+  onPipelineComplete,
+  onStatusChange,
+}: RecordButtonProps = {}) {
   const {
+    status,
     isRecording,
     duration,
-    audioBlob,
-    error: recorderError,
+    errorStage,
+    errorMessage,
     startRecording,
     stopRecording,
-    resetRecording,
-    mimeType
-  } = useAudioRecorder();
-
-  const {
-    isUploading,
-    isUploaded,
-    uploadError,
-    uploadedMetadata,
-    upload,
-    resetUpload
-  } = useRecordingUpload();
-
-  const {
-    transcriptionState,
-    transcriptionResult,
-    transcriptionError,
-    transcribe,
-    resetTranscription,
-  } = useTranscription(uploadedMetadata?.id);
-
-  useEffect(() => {
-    if (onTranscriptionComplete) {
-      onTranscriptionComplete(transcriptionResult?.text);
-    }
-  }, [transcriptionResult, onTranscriptionComplete]);
+    retryUpload,
+    retryTranscription,
+    retryAI,
+    reset,
+  } = useVoicePipeline({
+    onTranscriptionUpdate: onTranscriptionComplete,
+    onAIResponseUpdate: onAIResponseComplete,
+    onPipelineComplete: () => {
+      onUploadComplete?.();
+      onPipelineComplete?.();
+    },
+    onStatusChange,
+  });
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60).toString().padStart(2, '0');
@@ -51,77 +48,16 @@ export function RecordButton({ onTranscriptionComplete }: RecordButtonProps = {}
     return `${m}:${s}`;
   };
 
-  const formatSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + ' B';
-    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-    else return (bytes / 1048576).toFixed(1) + ' MB';
-  };
-
   const handleClick = () => {
     if (isRecording) {
       stopRecording();
-    } else {
+    } else if (status === 'idle') {
       startRecording();
     }
   };
 
-  const handleReset = () => {
-    resetRecording();
-    resetUpload();
-    resetTranscription();
-    if (onTranscriptionComplete) {
-      onTranscriptionComplete(undefined);
-    }
-  };
-
-  useEffect(() => {
-    if (audioBlob && !isUploading && !isUploaded && !uploadError) {
-      upload(audioBlob);
-    }
-  }, [audioBlob, upload, isUploading, isUploaded, uploadError]);
-
-  // Recorder Error state
-  if (recorderError) {
-    return (
-      <div className="flex flex-col items-center justify-center space-y-4 my-8 p-6 bg-red-500/10 border border-red-500/20 rounded-2xl max-w-md w-full">
-        <AlertCircle className="w-10 h-10 text-red-500" />
-        <p className="text-sm font-medium text-red-400 text-center">{recorderError}</p>
-        <button
-          onClick={handleReset}
-          className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm transition-colors"
-        >
-          Try Again
-        </button>
-      </div>
-    );
-  }
-
-  // Upload Error state
-  if (uploadError && audioBlob) {
-    return (
-      <div className="flex flex-col items-center justify-center space-y-4 my-8 p-6 bg-red-500/10 border border-red-500/20 rounded-2xl max-w-md w-full">
-        <AlertCircle className="w-10 h-10 text-red-500" />
-        <p className="text-sm font-medium text-red-400 text-center">{uploadError}</p>
-        <div className="flex items-center gap-3 mt-4">
-          <button
-            onClick={() => upload(audioBlob)}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition-colors"
-          >
-            Retry
-          </button>
-          <button
-            onClick={handleReset}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm transition-colors"
-          >
-            Record Again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   // Uploading state
-  if (isUploading) {
+  if (status === 'uploading') {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 my-8 p-6 bg-slate-900/50 border border-slate-800/80 rounded-2xl max-w-md w-full">
         <UploadCloud className="w-10 h-10 text-indigo-400 animate-bounce" />
@@ -131,55 +67,38 @@ export function RecordButton({ onTranscriptionComplete }: RecordButtonProps = {}
     );
   }
 
-  // Completed / Uploaded state
-  if (isUploaded && uploadedMetadata) {
+  // Transcribing state
+  if (status === 'transcribing') {
+    return (
+      <div className="flex flex-col items-center justify-center space-y-4 my-8 p-6 bg-slate-900/50 border border-slate-800/80 rounded-2xl max-w-md w-full">
+        <Loader2 className="w-10 h-10 text-violet-400 animate-spin" />
+        <h3 className="text-lg font-semibold text-violet-300">Transcribing...</h3>
+        <p className="text-sm text-slate-400">Converting speech to text.</p>
+      </div>
+    );
+  }
+
+  // Generating AI response state
+  if (status === 'generating') {
+    return (
+      <div className="flex flex-col items-center justify-center space-y-4 my-8 p-6 bg-slate-900/50 border border-slate-800/80 rounded-2xl max-w-md w-full">
+        <Sparkles className="w-10 h-10 text-violet-400 animate-pulse" />
+        <h3 className="text-lg font-semibold text-violet-300">Generating response...</h3>
+        <p className="text-sm text-slate-400">Thinking and generating an AI response.</p>
+      </div>
+    );
+  }
+
+  // Completed / Success state
+  if (status === 'success') {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 my-8 p-6 bg-slate-900/50 border border-slate-800/80 rounded-2xl max-w-md w-full">
         <CheckCircle2 className="w-10 h-10 text-emerald-500" />
-        <div className="text-center space-y-2">
-          <h3 className="text-lg font-semibold text-emerald-400">Upload successful</h3>
-          <div className="text-sm text-slate-400 space-y-1 mt-2">
-            <p>Recording ID: <span className="font-mono text-slate-300">{uploadedMetadata.id}</span></p>
-            <p>Type: {uploadedMetadata.mimeType}</p>
-            <p>Size: {formatSize(uploadedMetadata.size)}</p>
-            <p>Status: <span className="text-emerald-400 font-medium">{uploadedMetadata.status}</span></p>
-          </div>
-        </div>
-
-        <div className="w-full h-px bg-slate-800 my-2" />
-
-        {transcriptionState === 'idle' && (
-          <button
-            onClick={transcribe}
-            className="flex items-center gap-2 px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition-colors shadow-lg shadow-violet-500/25 w-full justify-center"
-          >
-            <FileText className="w-4 h-4" />
-            Transcribe
-          </button>
-        )}
-
-        {transcriptionState === 'transcribing' && (
-          <div className="flex flex-col items-center gap-2 py-4 text-violet-400">
-            <Loader2 className="w-6 h-6 animate-spin" />
-            <span className="text-sm font-medium">Transcribing...</span>
-          </div>
-        )}
-
-        {transcriptionState === 'error' && (
-          <div className="flex flex-col items-center gap-2 w-full p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-            <p className="text-sm font-medium text-red-400 text-center">{transcriptionError}</p>
-            <button
-              onClick={transcribe}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm transition-colors mt-2"
-            >
-              Retry Transcription
-            </button>
-          </div>
-        )}
-
+        <h3 className="text-lg font-semibold text-emerald-400">Success</h3>
+        <p className="text-sm text-slate-400">Voice processed and response generated.</p>
         <button
-          onClick={handleReset}
-          className="mt-4 flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-medium transition-colors w-full justify-center"
+          onClick={reset}
+          className="mt-2 flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-medium transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Record Again
@@ -188,6 +107,56 @@ export function RecordButton({ onTranscriptionComplete }: RecordButtonProps = {}
     );
   }
 
+  // Error state
+  if (status === 'error') {
+    return (
+      <div className="flex flex-col items-center justify-center space-y-4 my-8 p-6 bg-red-500/10 border border-red-500/20 rounded-2xl max-w-md w-full">
+        <AlertCircle className="w-10 h-10 text-red-500" />
+        <h3 className="text-lg font-semibold text-red-400">
+          {errorStage === 'upload' && 'Upload failed'}
+          {errorStage === 'transcribe' && 'Transcription failed'}
+          {errorStage === 'ai' && 'AI response failed'}
+          {errorStage === 'recorder' && 'Recording failed'}
+          {!errorStage && 'Error'}
+        </h3>
+        <p className="text-sm font-medium text-red-400/90 text-center">{errorMessage || 'An error occurred.'}</p>
+        <div className="flex items-center gap-3 mt-4">
+          {errorStage === 'upload' && (
+            <button
+              onClick={retryUpload}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              Retry
+            </button>
+          )}
+          {errorStage === 'transcribe' && (
+            <button
+              onClick={retryTranscription}
+              className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              Retry transcription
+            </button>
+          )}
+          {errorStage === 'ai' && (
+            <button
+              onClick={retryAI}
+              className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              Retry AI response
+            </button>
+          )}
+          <button
+            onClick={reset}
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm transition-colors"
+          >
+            {errorStage === 'recorder' ? 'Try Again' : 'Record Again'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Idle and Recording states
   return (
     <div className="flex flex-col items-center justify-center space-y-6 my-8">
       <div className="relative group">

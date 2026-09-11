@@ -4,10 +4,12 @@ import { RecordingsService } from './recordings.service';
 import { StorageModule } from '../storage/storage.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { TranscriptionModule } from '../transcription/transcription.module';
+import { AiModule } from '../ai/ai.module';
 
 @Module({
-  imports: [StorageModule, PrismaModule, TranscriptionModule],
+  imports: [StorageModule, PrismaModule, TranscriptionModule, AiModule,
+  ],
   controllers: [RecordingsController],
   providers: [RecordingsService],
 })
-export class RecordingsModule {}
+export class RecordingsModule { }
