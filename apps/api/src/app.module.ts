@@ -4,7 +4,10 @@ import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
 import { RecordingsModule } from './recordings/recordings.module';
 import { AiModule } from './ai/ai.module';
+import { AuthModule } from './auth/auth.module';
+import { RateLimitModule } from './common/rate-limit/rate-limit.module';
+
 @Module({
-  imports: [HealthModule, PrismaModule, RedisModule, RecordingsModule, AiModule],
+  imports: [HealthModule, PrismaModule, RedisModule, RecordingsModule, AiModule, AuthModule, RateLimitModule],
 })
 export class AppModule { }

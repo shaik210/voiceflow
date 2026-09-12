@@ -1,3 +1,5 @@
+import { getAccessToken } from './token';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 export interface RecordingMetadata {
@@ -40,12 +42,22 @@ export interface GenerateAIResponsePayload {
   response: AIResponse;
 }
 
+function getAuthHeaders(): Record<string, string> {
+  const token = getAccessToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 export async function uploadRecording(blob: Blob, originalName: string = 'recording.webm'): Promise<UploadRecordingResponse> {
   const formData = new FormData();
   formData.append('audio', blob, originalName);
 
   const response = await fetch(`${API_URL}/api/recordings`, {
     method: 'POST',
+    headers: getAuthHeaders(),
     body: formData,
   });
 
@@ -66,6 +78,7 @@ export async function uploadRecording(blob: Blob, originalName: string = 'record
 export async function transcribeRecording(id: string): Promise<Transcription> {
   const response = await fetch(`${API_URL}/api/recordings/${id}/transcribe`, {
     method: 'POST',
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
@@ -86,6 +99,7 @@ export async function transcribeRecording(id: string): Promise<Transcription> {
 export async function generateAIResponse(id: string): Promise<AIResponse> {
   const response = await fetch(`${API_URL}/api/recordings/${id}/ai-response`, {
     method: 'POST',
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
@@ -106,6 +120,7 @@ export async function generateAIResponse(id: string): Promise<AIResponse> {
 export async function listRecordings(limit: number = 20) {
   const response = await fetch(`${API_URL}/api/recordings?limit=${limit}`, {
     method: 'GET',
+    headers: getAuthHeaders(),
     cache: 'no-store', // ensures we don't get stale data on refresh
   });
 
@@ -119,6 +134,7 @@ export async function listRecordings(limit: number = 20) {
 export async function getRecording(id: string) {
   const response = await fetch(`${API_URL}/api/recordings/${id}`, {
     method: 'GET',
+    headers: getAuthHeaders(),
     cache: 'no-store',
   });
 

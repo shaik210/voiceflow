@@ -17,3 +17,24 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
 }
+
+export interface RegisterDTO {
+  email: string;
+  password: string;
+  name?: string;
+}
+
+export interface LoginDTO {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  accessToken: string;
+  user: {
+    id: string;
+    email: string;
+    name?: string | null;
+  };
+}

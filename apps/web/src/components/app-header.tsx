@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Mic, Activity, CheckCircle, AlertCircle } from 'lucide-react';
+import { Mic, Activity, CheckCircle, AlertCircle, LogOut, User as UserIcon } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 export function AppHeader() {
   const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  const { user, isAuthenticated, logout } = useAuth();
 
   useEffect(() => {
     const checkHealth = async () => {
@@ -47,9 +49,9 @@ export function AppHeader() {
         </div>
 
         <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 text-xs bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700">
+          <div className="hidden sm:flex items-center space-x-2 text-xs bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700">
             <Activity className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-slate-400">API Status:</span>
+            <span className="text-slate-400">API:</span>
             {apiStatus === 'checking' && (
               <span className="text-amber-400 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" /> Checking...
@@ -66,6 +68,23 @@ export function AppHeader() {
               </span>
             )}
           </div>
+
+          {isAuthenticated && user && (
+            <div className="flex items-center space-x-3 pl-2 border-l border-slate-800">
+              <div className="flex items-center space-x-2 text-xs text-slate-300 bg-slate-800/50 py-1.5 px-3 rounded-full border border-slate-700/60">
+                <UserIcon className="w-3.5 h-3.5 text-indigo-400" />
+                <span className="font-medium max-w-[120px] truncate">{user.name || user.email}</span>
+              </div>
+              <button
+                onClick={logout}
+                title="Log out"
+                className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg border border-transparent hover:border-rose-500/20 transition-colors"
+                aria-label="Log out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

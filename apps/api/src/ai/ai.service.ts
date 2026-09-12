@@ -30,7 +30,7 @@ export class AIService {
         });
     }
 
-    async generateResponseForRecording(recordingId: string) {
+    async generateResponseForRecording(recordingId: string, userId: string) {
         const recording = await this.prisma.recording.findUnique({
             where: { id: recordingId },
             include: {
@@ -42,7 +42,7 @@ export class AIService {
             },
         });
 
-        if (!recording) {
+        if (!recording || recording.userId !== userId) {
             throw new NotFoundException('Recording not found');
         }
 

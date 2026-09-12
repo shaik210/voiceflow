@@ -13,13 +13,13 @@ export class TranscriptionService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async transcribeRecording(recordingId: string) {
+  async transcribeRecording(recordingId: string, userId: string) {
     const recording = await this.prisma.recording.findUnique({
       where: { id: recordingId },
       include: { transcription: true },
     });
 
-    if (!recording) {
+    if (!recording || recording.userId !== userId) {
       throw new NotFoundException('Recording not found');
     }
 

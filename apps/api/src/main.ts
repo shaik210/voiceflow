@@ -22,6 +22,22 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // Configure Express reverse proxy trust settings for accurate client IP resolution behind load balancers/proxies
+  // Standard deployment assumption: 1 hop in front of the application (e.g. Nginx, Docker ingress, ALB).
+  // Can be configured through TRUST_PROXY environment variable.
+  const trustProxySetting = process.env.TRUST_PROXY || '1';
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.set(
+    'trust proxy',
+    trustProxySetting === 'true'
+      ? true
+      : trustProxySetting === 'false'
+      ? false
+      : !isNaN(Number(trustProxySetting))
+      ? Number(trustProxySetting)
+      : trustProxySetting,
+  );
+
   // Attach global exception filter
   app.useGlobalFilters(new HttpExceptionFilter());
 

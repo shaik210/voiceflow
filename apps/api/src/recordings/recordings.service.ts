@@ -22,7 +22,7 @@ export class RecordingsService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async validateAndExtractMetadata(file?: Express.Multer.File) {
+  async validateAndExtractMetadata(file: Express.Multer.File, userId: string) {
     if (!file) {
       throw new BadRequestException('Audio file is required');
     }
@@ -52,6 +52,7 @@ export class RecordingsService {
       const recording = await this.prisma.recording.create({
         data: {
           id: recordingId,
+          userId,
           objectKey,
           mimeType: file.mimetype,
           size: file.size,
@@ -73,8 +74,9 @@ export class RecordingsService {
     }
   }
 
-  async listRecordings(limit: number) {
+  async listRecordings(userId: string, limit: number) {
     const recordings = await this.prisma.recording.findMany({
+      where: { userId },
       take: limit,
       orderBy: [
         { createdAt: 'desc' },
@@ -94,12 +96,12 @@ export class RecordingsService {
 
     return recordings.map((r) => {
       // Exclude objectKey to avoid leaking storage details
-      const { objectKey, userId, ...safeRecording } = r;
+      const { objectKey, userId: _u, ...safeRecording } = r;
       return safeRecording;
     });
   }
 
-  async getRecording(id: string) {
+  async getRecording(id: string, userId: string) {
     const recording = await this.prisma.recording.findUnique({
       where: { id },
       include: {
@@ -114,11 +116,11 @@ export class RecordingsService {
       },
     });
 
-    if (!recording) {
+    if (!recording || recording.userId !== userId) {
       throw new NotFoundException('Recording not found');
     }
 
-    const { objectKey, userId, ...safeRecording } = recording;
+    const { objectKey, userId: _u, ...safeRecording } = recording;
     return safeRecording;
   }
 }

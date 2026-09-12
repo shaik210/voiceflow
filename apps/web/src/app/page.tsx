@@ -2,15 +2,18 @@
 
 import React, { useState } from 'react';
 import { AppHeader } from '@/components/app-header';
+import { AuthCard } from '@/components/auth-card';
 import { RecordButton } from '@/components/record-button';
 import { TranscriptionBox } from '@/components/transcription-box';
 import { AIResponseBox } from '@/components/ai-response-box';
 import { RecordingHistory } from '@/components/recording-history';
 import { PipelineStatus } from '@/hooks/use-voice-pipeline';
+import { useAuth } from '@/hooks/use-auth';
 import { AIResponse } from '@/lib/api/recordings';
-import { Layers, Database, Cpu, ArrowRight } from 'lucide-react';
+import { Layers, Database, Cpu, ArrowRight, Loader2 } from 'lucide-react';
 
 export default function HomePage() {
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [transcriptionText, setTranscriptionText] = useState<string | undefined>();
   const [aiResponse, setAiResponse] = useState<AIResponse | undefined>();
   const [pipelineStatus, setPipelineStatus] = useState<PipelineStatus>('idle');
@@ -29,6 +32,20 @@ export default function HomePage() {
     setRefreshTrigger(prev => prev + 1);
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+        <AppHeader />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3 text-indigo-400">
+            <Loader2 className="w-8 h-8 animate-spin" />
+            <p className="text-sm font-medium text-slate-400">Loading VoiceFlow...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
       <AppHeader />
@@ -41,33 +58,41 @@ export default function HomePage() {
             VoiceFlow V1 Architecture Foundation
           </div>
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-indigo-300">
-            Turn your voice into text.
+            {isAuthenticated ? (user?.name ? `Welcome, ${user.name}` : 'Turn your voice into text.') : 'Turn your voice into text.'}
           </h1>
           <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-            Experience seamless speech-to-text intelligence. Powered by a high-performance monorepo with Node.js, Next.js, Prisma PostgreSQL, and Redis.
+            {isAuthenticated
+              ? 'Record voice notes, transcribe speech, and generate AI insights in your private workspace.'
+              : 'Experience seamless speech-to-text intelligence. Sign in or create an account to get started.'}
           </p>
         </div>
 
-        {/* Interactive Voice Pipeline Section */}
-        <div className="w-full max-w-3xl space-y-6">
-          <RecordButton 
-            onTranscriptionComplete={handleTranscriptionComplete} 
-            onAIResponseComplete={handleAIResponseComplete}
-            onPipelineComplete={handlePipelineComplete}
-            onStatusChange={setPipelineStatus}
-          />
-          <TranscriptionBox transcription={transcriptionText} isSimulated={false} />
-          <AIResponseBox
-            response={aiResponse?.text}
-            model={aiResponse?.model}
-            isLoading={pipelineStatus === 'generating'}
-          />
-        </div>
+        {!isAuthenticated ? (
+          <AuthCard />
+        ) : (
+          <>
+            {/* Interactive Voice Pipeline Section */}
+            <div className="w-full max-w-3xl space-y-6">
+              <RecordButton 
+                onTranscriptionComplete={handleTranscriptionComplete} 
+                onAIResponseComplete={handleAIResponseComplete}
+                onPipelineComplete={handlePipelineComplete}
+                onStatusChange={setPipelineStatus}
+              />
+              <TranscriptionBox transcription={transcriptionText} isSimulated={false} />
+              <AIResponseBox
+                response={aiResponse?.text}
+                model={aiResponse?.model}
+                isLoading={pipelineStatus === 'generating'}
+              />
+            </div>
 
-        {/* History Section */}
-        <div className="w-full max-w-3xl">
-          <RecordingHistory refreshTrigger={refreshTrigger} />
-        </div>
+            {/* History Section */}
+            <div className="w-full max-w-3xl">
+              <RecordingHistory refreshTrigger={refreshTrigger} />
+            </div>
+          </>
+        )}
 
         {/* System Architecture Overview Grid */}
         <div className="w-full max-w-3xl mt-16 pt-12 border-t border-slate-800/80">
