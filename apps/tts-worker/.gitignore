@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+*.wav
+test*.wav
+
+# Piper ONNX model files (do not commit binaries)
+models/*.onnx
+models/*.onnx.json

@@ -8,14 +8,14 @@ datasource db {
 }
 
 model User {
-  id           String      @id @default(uuid())
-  email        String      @unique
+  id           String   @id @default(uuid())
+  email        String   @unique
   passwordHash String
   name         String?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  recordings   Recording[]
+  recordings Recording[]
 
   @@map("users")
 }
@@ -66,4 +66,30 @@ model AIResponse {
   updatedAt       DateTime @updatedAt
 
   transcription Transcription @relation(fields: [transcriptionId], references: [id], onDelete: Cascade)
+  ttsAudio      TTSAudio?
+}
+
+enum TTSStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model TTSAudio {
+  id           String    @id @default(uuid())
+  aiResponseId String    @unique
+  objectKey    String?
+  mimeType     String    @default("audio/wav")
+  size         Int?
+  duration     Float?
+  voice        String    @default("en_US-lessac-medium")
+  model        String    @default("piper")
+  status       TTSStatus @default(PENDING)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  aiResponse AIResponse @relation(fields: [aiResponseId], references: [id], onDelete: Cascade)
+
+  @@index([aiResponseId])
+  @@map("tts_audios")
 }
